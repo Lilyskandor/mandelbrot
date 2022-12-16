@@ -30,6 +30,34 @@ fn escape_time(c: Complex<f64>, limit: usize) -> Option<usize> {
     None
 }
 
+/// Render a rectangle of the Mandelbrot set into a buffer of pixels.
+/// 
+/// The 'bounds' argument gives the width and height of the buffer 'pixels',
+/// which holds one grayscale pixel per byte. The 'upper_left' and 'lower_right'
+/// arguments specify points on the complex plane corresponding to the upper-
+/// left and lower-right corner of the pixel buffer.
+fn render(pixels: &mut[u8],
+          bounds: (usize, usize),
+          upper_left: Complex<f64>,
+          lower_right: Complex<f64>) {
+    assert!(pixels.len() == bounds.0 * bounds.1);
+
+    let limit = 255;
+    let black: u8 = 0;
+    let white: u8 = 255;
+
+    for row in 0..bounds.1 {
+        for column in 0..bounds.0 {
+            let point = pixel_to_point(bounds, (column, row), upper_left, lower_right);
+            pixels[row * bounds.0 + column] =
+                match escape_time(point, limit) {
+                    None => black,
+                    Some(count) => white - (count as u8)
+                };
+        }
+    }
+}
+
 /// Given the row and column of a pixel in the output image, return the
 /// corresponding point on the complex plane.
 /// 
@@ -40,8 +68,7 @@ fn escape_time(c: Complex<f64>, limit: usize) -> Option<usize> {
 fn pixel_to_point(bounds: (usize, usize),
                   pixel: (usize, usize),
                   upper_left: Complex<f64>,
-                  lower_right: Complex<f64>)
-    -> Complex<f64> {
+                  lower_right: Complex<f64>) -> Complex<f64> {
     let (width, height) = (lower_right.re - upper_left.re,
                                      upper_left.im - lower_right.im);
     Complex { re: upper_left.re + (pixel.0 as f64) * width / (bounds.0 as f64),
