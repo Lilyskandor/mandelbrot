@@ -4,7 +4,8 @@ use num::Complex;
 use std::str::FromStr;
 
 use image::ColorType;
-use image::png::PNGEncoder;
+use image::codecs::png::PngEncoder;
+use image::ImageEncoder;
 use std::fs::File;
 
 use std::env;
@@ -32,10 +33,11 @@ fn main() {
 /// Write the buffer 'pixels', whose dimensions are given by 'bounds', to the
 /// file named 'filename'.
 fn write_image(filename: &str, pixels: &[u8], bounds: (usize, usize)) -> Result<(), std::io::Error> {
+
     let output = File::create(filename)?;
 
-    let encoder = PNGEncoder::new(output);
-    encoder.encode(pixels, bounds.0 as u32, bounds.1 as u32, ColorType::Gray(0))?;
+    let encoder = PngEncoder::new(output);
+    encoder.write_image(pixels, bounds.0 as u32, bounds.1 as u32, ColorType::L8).expect("Error encoding image");
 
     Ok(())
 }
@@ -53,13 +55,13 @@ fn escape_time(c: Complex<f64>, limit: usize) -> Option<usize> {
         re: 0.0,
         im: 0.0,
     };
+
     for i in 0..limit {
-        if c.norm_sqr() > 4.0 {
+        if z.norm_sqr() > 4.0 {
             return Some(i)
         }
         z = z * z + c;
     }
-
     None
 }
 
@@ -104,9 +106,10 @@ fn pixel_to_point(bounds: (usize, usize),
                   lower_right: Complex<f64>) -> Complex<f64> {
     let (width, height) = (lower_right.re - upper_left.re,
                                      upper_left.im - lower_right.im);
-    Complex { re: upper_left.re + (pixel.0 as f64) * width / (bounds.0 as f64),
-              im: upper_left.im - (pixel.1 as f64) * height / (bounds.1 as f64)
-              // pixel.1 increases as we go down, but the imaginary component increases as we go up.
+    Complex {
+        re: upper_left.re + (pixel.0 as f64) * width / (bounds.0 as f64),
+        im: upper_left.im - (pixel.1 as f64) * height / (bounds.1 as f64)
+        // pixel.1 increases as we go down, but the imaginary component increases as we go up.
     }
 }
 
