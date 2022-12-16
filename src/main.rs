@@ -1,7 +1,7 @@
 #![allow(dead_code, unused_variables)]
 
 use num::Complex;
-use std::{str::FromStr, ops::Index};
+use std::str::FromStr;
 
 fn main() {
     println!("Hello, world!");
@@ -28,6 +28,26 @@ fn escape_time(c: Complex<f64>, limit: usize) -> Option<usize> {
     }
 
     None
+}
+
+/// Given the row and column of a pixel in the output image, return the
+/// corresponding point on the complex plane.
+/// 
+/// 'bounds' is a pair giving the width and height of the image in pixels.
+/// 'pixel' is a (column, row) pair indicating a particular pixel in that image.
+/// The 'upper_left' and 'lower_right' parameters are points on the complex
+/// plane designating the area our image covers.
+fn pixel_to_point(bounds: (usize, usize),
+                  pixel: (usize, usize),
+                  upper_left: Complex<f64>,
+                  lower_right: Complex<f64>)
+    -> Complex<f64> {
+    let (width, height) = (lower_right.re - upper_left.re,
+                                     upper_left.im - lower_right.im);
+    Complex { re: upper_left.re + (pixel.0 as f64) * width / (bounds.0 as f64),
+              im: upper_left.im - (pixel.1 as f64) * height / (bounds.1 as f64)
+              // pixel.1 increases as we go down, but the imaginary component increases as we go up.
+    }
 }
 
 /// Parse a pair of floating-point numbers separated by a comma as a complex
